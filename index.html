@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset=utf-8>
+        <title>g</title>
+        <style>
+            body { margin: 0; }
+            canvas { width: 100%; height: 100% }
+			
+			#xx{width:500px; height:200px; position:absolute; top:145px; left:80px; font-size:40pt; font-weight:600}
+			#xxx{width:500px; height:200px; position:absolute; top:40px; left:80px; font-size:62pt; font-weight:900}
+			#yy{width:1400px; height:650px; position: absolute; top:20px; left:40px; border:10px solid white; animation : twa 0.5s infinite}
+			#yyy{width:1375px; height:625px; position: absolute; top:41px; left:61px; border:2px solid white; animation : twa2 0.5s infinite }
+			
+			@keyframes twa{from{border:10px solid white;}
+				50%{border:10px solid rgba(255,255,255,0.00);}
+				to{border:10px solid white;}}
+			@keyframes twa2{from{border:2px solid white;}
+				50%{border:2px solid rgba(255,255,255,0.00);}
+				to{border:2px solid white;}}
+        </style>
+    </head>
+    <body>
+		
+		
+	<div id = "xx"><font color="white"><u>Inferiority Complex</u></font></div>
+	<div id = "xxx"><font color="white">劣等感</font></div>
+	<div id = "yy"></div>
+	<div id = "yyy"></div>
+<script src="three.js"></script>
+<script src="examples/js/controls/TrackballControls.js"></script>
+<script>
+var camera, controls, scene, renderer;
+var mouse, INTERSECTED;
+var raycaster;
+var counterMotion = 0;
+var cubes = [];
+var animationNow = true;
+init();
+animate();
+function onDocumentMouseMove( event ) {
+  event.preventDefault();
+  mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+  mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+}
+function changeBarAnimation () {
+    animationNow = !animationNow;
+    var innerp = document.getElementById("innerp");
+    if (!animationNow) {
+        innerp.innerHTML = "START ANIMATION";
+    } else {
+        innerp.innerHTML = "STOP ANIMATION";
+    }
+}
+function onDocumentClick( event ) {
+  event.preventDefault();
+  mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+  mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+}
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize( window.innerWidth, window.innerHeight );
+}
+function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color( 0x111111 );
+    scene.fog = new THREE.Fog( 0x111111, 1, 700 );
+    camera = new THREE.PerspectiveCamera( 20, window.innerWidth/window.innerHeight, 0.4, 2000 );
+    camera.position.set( 240, 270, 0 );
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.autoClear = false;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    document.body.appendChild( renderer.domElement );
+    controls = new THREE.TrackballControls( camera );
+    controls.rotateSpeed = 1.0;
+ 
+    controls.zoomSpeed = 1.2;
+
+    controls.panSpeed = 0.8;
+
+    controls.noZoom = false;
+
+    controls.noPan = false;
+
+    controls.staticMoving = false;
+
+    controls.dynamicDampingFactor = 0.2;
+    var ambient = new THREE.AmbientLight( 0x111111 );
+    scene.add( ambient );
+    light = new THREE.SpotLight( 0x333333,5.0, 0, Math.PI / 2 );
+    light.position.set( 450, 800, 200 );
+    light.target.position.set( 0, 0, 0 );
+    light.castShadow = true;
+    light.shadow = new THREE.LightShadow( new THREE.PerspectiveCamera( 50, 1, 800, 1500 ) );
+    light.shadow.bias = 0.0001;
+    light.shadow.mapSize.width = 4096;
+    light.shadow.mapSize.height = 4096;
+    scene.add( light );
+
+    raycaster = new THREE.Raycaster();
+
+    mouse = new THREE.Vector2();
+
+    for ( var z = -10; z <= 10; z++ ) {
+        for ( var x = -10; x <= 10; x++ ) {
+
+            var barHeight = 5 + (10 - Math.abs(x))* (10 - Math.abs(z))*3;
+            var geometry = new THREE.BoxGeometry( 10, barHeight, 10 );
+
+            var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: 0xffffff, flatShading: true  } ) );
+
+            object.castShadow = true;
+            object.receiveShadow = true;
+
+            var objs = new THREE.Object3D();
+            objs.add(object);
+ 
+            objs.position.x = x * 15;
+            objs.position.y = 0;
+            objs.position.z = z * 15;
+
+            cubes.push(objs);
+        }
+    }
+ 
+    for (var i=0; i<cubes.length; i++) {
+
+        scene.add(cubes[i]);
+    }
+    
+
+    document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+    document.addEventListener( 'click', onDocumentClick, false );
+  
+    window.addEventListener( 'resize', onWindowResize, false );
+}
+
+function animate() {
+    requestAnimationFrame(animate );
+ 
+    if (animationNow) {
+        counterMotion++;
+
+        for (var i=0; i<cubes.length; i++) {
+            var x = i%21;
+            var z = parseInt(i/21);
+            var hue = parseInt(50 + 50*Math.sin((counterMotion + x*z*1)*(Math.PI/180)));
+            var color = new THREE.Color("hsl("+hue+", "+(100-hue)+"%, 50%)");
+            cubes[i].children[0].material.color = color;
+            cubes[i].position.y = 50*Math.sin((counterMotion + x*z)*(Math.PI/180));
+        }
+    }
+    controls.update();
+    renderer.render(scene, camera);
+}
+</script>
+
+</body>
+</html>
